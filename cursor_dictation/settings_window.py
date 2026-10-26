@@ -38,7 +38,7 @@ class SettingsWindow(QWidget):
     def __init__(self, settings: Settings, list_mics, parent=None):
         super().__init__(parent)
         self.s = settings
-        self.setWindowTitle("Settings")      # Qt appends " - Parakeet Tray"
+        self.setWindowTitle("Settings")      # Qt appends " - Cursor Dictation"
         self.setMinimumWidth(460)
         self._loading = True
         lay = QVBoxLayout(self)

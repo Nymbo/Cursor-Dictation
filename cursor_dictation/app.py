@@ -275,7 +275,7 @@ class App(QObject):
 def _setup_logging() -> None:
     ensure_dirs()
     handlers: list[logging.Handler] = [
-        RotatingFileHandler(LOG_DIR / "parakeet-tray.log", maxBytes=1_000_000, backupCount=2, encoding="utf-8")]
+        RotatingFileHandler(LOG_DIR / "cursor-dictation.log", maxBytes=1_000_000, backupCount=2, encoding="utf-8")]
     if sys.stderr is not None:
         handlers.append(logging.StreamHandler())
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",

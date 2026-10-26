@@ -1,4 +1,4 @@
-# Parakeet Tray
+# Cursor Dictation
 
 Dictation for Windows. Press a hotkey, talk, and what you said is typed wherever your cursor
 is: an editor, a chat box, a browser, a terminal. It runs in the system tray.
@@ -22,13 +22,13 @@ Needs Windows 10 or 11, Python 3.13 and [uv](https://docs.astral.sh/uv/). For th
 NVIDIA card with ~2.5 GB of free VRAM and a current driver; CUDA itself comes from pip.
 
 ```powershell
-git clone https://github.com/Nymbo/Parakeet-Tray.git
-cd Parakeet-Tray
+git clone https://github.com/Nymbo/Cursor-Dictation.git
+cd Cursor-Dictation
 .\setup.ps1
 .\.venv\Scripts\pythonw.exe run.pyw          # the tray app, no console window
 ```
 
-`.\.venv\Scripts\python.exe -m parakeet_tray` runs it with a console (log output). A second
+`.\.venv\Scripts\python.exe -m cursor_dictation` runs it with a console (log output). A second
 launch opens the running copy's settings. The speech model downloads on first use into
 the Hugging Face cache: about 2.5 GB for the GPU, or 670 MB for the CPU, per language
 setting.
@@ -36,7 +36,7 @@ setting.
 To try the model without the tray:
 
 ```powershell
-.\.venv\Scripts\python.exe -m parakeet_tray transcribe clip.wav     # --cpu for the CPU, --multilingual for v3
+.\.venv\Scripts\python.exe -m cursor_dictation transcribe clip.wav     # --cpu for the CPU, --multilingual for v3
 ```
 
 ## Using it
@@ -53,8 +53,8 @@ To try the model without the tray:
 - A recording stops on its own after 15 minutes. Long recordings are split at pauses and
   transcribed piece by piece.
 
-Settings live in `%APPDATA%\Parakeet-Tray\settings.json`, logs in
-`%LOCALAPPDATA%\Parakeet-Tray\logs`.
+Settings live in `%APPDATA%\Cursor-Dictation\settings.json`, logs in
+`%LOCALAPPDATA%\Cursor-Dictation\logs`.
 
 ## Model choice
 
@@ -88,11 +88,11 @@ the clipboard, waits for you to let go of the hotkey's modifiers, sends Ctrl+V, 
 restores the clipboard. The hotkey is a Win32 `RegisterHotKey`, so no keyboard hook is
 installed.
 
-Before October 2026 this app lived in a monorepo and ran Parakeet on NVIDIA NeMo and
-PyTorch. It now uses the same ONNX engine as its sibling apps, Live Subtitles and Meeting
-Context: the environment went from 4.8 GB to 3 GB (most of what's left is CUDA and cuDNN),
-the model is ready 3 to 5 seconds after launch, and it no longer needs a low-level
-keyboard hook.
+Until October 2026 this app was called Parakeet Tray, lived in a monorepo, and ran
+Parakeet on NVIDIA NeMo and PyTorch. It now uses the same ONNX engine as its sibling apps,
+Live Subtitles and Meeting Context: the environment went from 4.8 GB to 3 GB (most of
+what's left is CUDA and cuDNN), the model is ready 3 to 5 seconds after launch, and it no
+longer needs a low-level keyboard hook.
 
 ## Development
 

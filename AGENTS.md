@@ -1,19 +1,19 @@
 # Agent Instructions
 
-Parakeet Tray is a Windows tray app (PySide6) for dictation: a global hotkey records the
+Cursor Dictation is a Windows tray app (PySide6) for dictation: a global hotkey records the
 microphone, NVIDIA Parakeet TDT 0.6B transcribes it locally (v2 for English by default, v3
 for 25 languages), and the text is pasted at the cursor of whatever window has focus.
 Public repository (MIT). The README's "Model choice" section records why v2 is the
 default; re-measure with Live Subtitles' `bench.phrases` before changing it.
 
-It moved out of the owner's HF-Dev monorepo on 2026-10-26 (the NeMo/PyTorch version is in
-that repo's history) and was rebuilt on the conventions of its siblings, Live Subtitles
-(`Nymbo/Live-Subtitles`) and Meeting Context (a private repo). They share code by copying,
-never at runtime; don't import across repos.
+It was called Parakeet Tray until 2026-10-26, when it moved out of the owner's HF-Dev
+monorepo (the NeMo/PyTorch version is in that repo's history) and was rebuilt on the
+conventions of its siblings, Live Subtitles (`Nymbo/Live-Subtitles`) and Meeting Context
+(a private repo). They share code by copying, never at runtime; don't import across repos.
 
 ## Layout
 
-- `parakeet_tray/app.py` wires it together and owns the one-at-a-time state machine
+- `cursor_dictation/app.py` wires it together and owns the one-at-a-time state machine
   (idle -> recording -> transcribing -> idle), the hotkey's tap-or-hold logic, and the
   single-instance check (a named mutex; a second launch opens Settings in the first).
 - `capture.py` (WASAPI mic -> 16 kHz mono float32), `asr.py` (onnx-asr Parakeet; the
@@ -21,7 +21,7 @@ never at runtime; don't import across repos.
   (clipboard snapshot, Ctrl+V, restore), `hotkeys.py` (Win32 `RegisterHotKey` through a
   Qt native event filter), `sounds.py` (generated tones), `tray.py`, `settings_window.py`,
   `settings.py`, `paths.py`, `autostart.py`.
-- `python -m parakeet_tray transcribe FILE.wav [--cpu]` runs the engine without the tray.
+- `python -m cursor_dictation transcribe FILE.wav [--cpu]` runs the engine without the tray.
 - `tests/test_core.py` covers the pure-Python parts.
 
 ## Rules that are easy to break
@@ -39,8 +39,8 @@ never at runtime; don't import across repos.
 - **The clipboard is the user's.** `paste.insert_text` restores what was there; keep that
   working for non-text formats (images, files), and keep the history-exclusion format on
   the transient text.
-- **Data lives outside the repo.** Settings in `%APPDATA%\Parakeet-Tray`; logs and the
-  generated tones in `%LOCALAPPDATA%\Parakeet-Tray`; the model in the Hugging Face cache.
+- **Data lives outside the repo.** Settings in `%APPDATA%\Cursor-Dictation`; logs and the
+  generated tones in `%LOCALAPPDATA%\Cursor-Dictation`; the model in the Hugging Face cache.
   `APP_NAME` names those folders and the instance mutex, so changing it orphans settings.
 - The repo is public: no personal paths, names or recordings in code, tests or docs.
 
@@ -53,8 +53,8 @@ never at runtime; don't import across repos.
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests
-.\.venv\Scripts\python.exe -c "import parakeet_tray.app, parakeet_tray.settings_window, parakeet_tray.asr; print('imports ok')"
+.\.venv\Scripts\python.exe -c "import cursor_dictation.app, cursor_dictation.settings_window, cursor_dictation.asr; print('imports ok')"
 ```
 
 - For engine changes, transcribe a real WAV with both models on both devices:
-  `python -m parakeet_tray transcribe clip.wav`, then with `--cpu`, `--multilingual`, and both.
+  `python -m cursor_dictation transcribe clip.wav`, then with `--cpu`, `--multilingual`, and both.

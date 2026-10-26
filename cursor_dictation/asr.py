@@ -208,7 +208,7 @@ def read_audio(path: str) -> np.ndarray:
 def cli_main(argv: list[str]) -> int:
     files = [a for a in argv if not a.startswith("--")]
     if not files:
-        print("usage: python -m parakeet_tray transcribe FILE.wav [--cpu] [--multilingual]", file=sys.stderr)
+        print("usage: python -m cursor_dictation transcribe FILE.wav [--cpu] [--multilingual]", file=sys.stderr)
         return 2
     key = "multilingual" if "--multilingual" in argv else DEFAULT_MODEL
     model, device = load_model("--cpu" not in argv, key)

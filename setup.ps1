@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Create or update Parakeet Tray's Python environment (.venv) with uv.
+    Create or update Cursor Dictation's Python environment (.venv) with uv.
 
 .EXAMPLE
     .\setup.ps1

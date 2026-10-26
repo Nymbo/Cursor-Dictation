@@ -12,10 +12,10 @@ from pathlib import Path
 
 import numpy as np
 
-from parakeet_tray import settings as S
-from parakeet_tray.asr import SR, clean_text, is_silent, read_audio, split_points
-from parakeet_tray.hotkeys import MOD_ALT, MOD_CONTROL, MOD_SHIFT, parse
-from parakeet_tray.sounds import TONES, tone_wav
+from cursor_dictation import settings as S
+from cursor_dictation.asr import SR, clean_text, is_silent, read_audio, split_points
+from cursor_dictation.hotkeys import MOD_ALT, MOD_CONTROL, MOD_SHIFT, parse
+from cursor_dictation.sounds import TONES, tone_wav
 
 
 class HotkeyTests(unittest.TestCase):
@@ -44,8 +44,8 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(S.load(path), s)
 
     def test_default_model_is_english_and_every_choice_exists(self):
-        from parakeet_tray.asr import DEFAULT_MODEL, MODELS
-        from parakeet_tray.settings_window import LANGUAGES
+        from cursor_dictation.asr import DEFAULT_MODEL, MODELS
+        from cursor_dictation.settings_window import LANGUAGES
 
         self.assertEqual(S.Settings().model, DEFAULT_MODEL)
         self.assertEqual({v for _, v in LANGUAGES}, set(MODELS))
@@ -64,7 +64,7 @@ class SettingsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "settings.json"
             path.write_text("{not json", encoding="utf-8")
-            with self.assertLogs("parakeet_tray.settings", "ERROR"):
+            with self.assertLogs("cursor_dictation.settings", "ERROR"):
                 self.assertEqual(S.load(path), S.Settings())
 
 
