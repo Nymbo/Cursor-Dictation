@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFormLayout, QGroupBox, QKe
 from . import DISPLAY_NAME, __version__, autostart
 from .settings import Settings
 
+LANGUAGES = (("English (Parakeet v2, most accurate)", "english"),
+             ("Multilingual: 25 European languages (Parakeet v3)", "multilingual"))
 RECOGNIZERS = (("Automatic (GPU if there is one)", "auto"), ("GPU (NVIDIA, CUDA)", "gpu"), ("CPU", "cpu"))
 
 
@@ -58,6 +60,12 @@ class SettingsWindow(QWidget):
         self.mic.setCurrentIndex(max(0, self.mic.findData(self.s.mic)))
         self.mic.currentIndexChanged.connect(lambda: self._set("mic", self.mic.currentData()))
         f.addRow("Microphone:", self.mic)
+        self.model = QComboBox()
+        for label, value in LANGUAGES:
+            self.model.addItem(label, value)
+        self.model.setCurrentIndex(max(0, self.model.findData(self.s.model)))
+        self.model.currentIndexChanged.connect(lambda: self._set("model", self.model.currentData()))
+        f.addRow("Language:", self.model)
         self.recognizer = QComboBox()
         for label, value in RECOGNIZERS:
             self.recognizer.addItem(label, value)
@@ -83,7 +91,7 @@ class SettingsWindow(QWidget):
 
         self.status = _note()
         lay.addWidget(self.status)
-        lay.addWidget(_note(f"{DISPLAY_NAME} {__version__}: NVIDIA Parakeet TDT 0.6B v3, on this PC only."))
+        lay.addWidget(_note(f"{DISPLAY_NAME} {__version__}: NVIDIA Parakeet TDT 0.6B, on this PC only."))
         lay.addStretch(1)
         self._loading = False
 

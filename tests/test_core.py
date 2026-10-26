@@ -43,6 +43,13 @@ class SettingsTests(unittest.TestCase):
             S.save(s, path)
             self.assertEqual(S.load(path), s)
 
+    def test_default_model_is_english_and_every_choice_exists(self):
+        from parakeet_tray.asr import DEFAULT_MODEL, MODELS
+        from parakeet_tray.settings_window import LANGUAGES
+
+        self.assertEqual(S.Settings().model, DEFAULT_MODEL)
+        self.assertEqual({v for _, v in LANGUAGES}, set(MODELS))
+
     def test_missing_file_gives_defaults(self):
         self.assertEqual(S.load(Path(tempfile.gettempdir()) / "no-such-parakeet-settings.json"), S.Settings())
 

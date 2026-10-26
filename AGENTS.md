@@ -1,8 +1,10 @@
 # Agent Instructions
 
 Parakeet Tray is a Windows tray app (PySide6) for dictation: a global hotkey records the
-microphone, NVIDIA Parakeet TDT 0.6B v3 transcribes it locally, and the text is pasted at
-the cursor of whatever window has focus. Public repository (MIT).
+microphone, NVIDIA Parakeet TDT 0.6B transcribes it locally (v2 for English by default, v3
+for 25 languages), and the text is pasted at the cursor of whatever window has focus.
+Public repository (MIT). The README's "Model choice" section records why v2 is the
+default; re-measure with Live Subtitles' `bench.phrases` before changing it.
 
 It moved out of the owner's HF-Dev monorepo on 2026-10-26 (the NeMo/PyTorch version is in
 that repo's history) and was rebuilt on the conventions of its siblings, Live Subtitles
@@ -54,5 +56,5 @@ never at runtime; don't import across repos.
 .\.venv\Scripts\python.exe -c "import parakeet_tray.app, parakeet_tray.settings_window, parakeet_tray.asr; print('imports ok')"
 ```
 
-- For engine changes, transcribe a real WAV on both devices:
-  `python -m parakeet_tray transcribe clip.wav` and the same with `--cpu`.
+- For engine changes, transcribe a real WAV with both models on both devices:
+  `python -m parakeet_tray transcribe clip.wav`, then with `--cpu`, `--multilingual`, and both.

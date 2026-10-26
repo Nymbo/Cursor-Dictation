@@ -1,9 +1,12 @@
-"""Speech recognition: NVIDIA Parakeet TDT 0.6B v3 on onnx-asr (ONNX Runtime, GPU or CPU).
+"""Speech recognition: NVIDIA Parakeet TDT 0.6B on onnx-asr (ONNX Runtime, GPU or CPU).
 
-The same model and export the sibling apps use (Meeting Context, Live Subtitles' file
-transcription), from istupakov/parakeet-tdt-0.6b-v3-onnx in the Hugging Face cache:
-fp32 on the GPU (~2.5 GB download), int8 on the CPU (~670 MB). Parakeet writes punctuation
-and capitals itself, and handles 25 European languages without being told which.
+Two versions, istupakov's ONNX exports in the Hugging Face cache: fp32 on the GPU (~2.5 GB
+download), int8 on the CPU (~670 MB). Both write punctuation and capitals themselves.
+- v2 (English only) is the default. On Live Subtitles' phrase benchmark (clips of up to
+  12 s, about what one dictation is) it scored 11.6% WER on real speech vs v3's 13.2%,
+  and won 13 of 16 scenes. See the README.
+- v3 handles 25 European languages without being told which; it is the model Meeting
+  Context and Live Subtitles' file transcription use.
 
 This process imports onnxruntime-gpu. Never add sherpa-onnx (or anything else that ships
 its own onnxruntime.dll) to it: whichever loads second breaks. See AGENTS.md.
@@ -23,8 +26,12 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 SR = 16000
-MODEL = "nemo-parakeet-tdt-0.6b-v3"          # onnx_asr.load_model name
-REPO = "istupakov/parakeet-tdt-0.6b-v3-onnx"
+# Settings value -> (onnx_asr.load_model name, Hugging Face repo of the export).
+MODELS = {
+    "english": ("nemo-parakeet-tdt-0.6b-v2", "istupakov/parakeet-tdt-0.6b-v2-onnx"),
+    "multilingual": ("nemo-parakeet-tdt-0.6b-v3", "istupakov/parakeet-tdt-0.6b-v3-onnx"),
+}
+DEFAULT_MODEL = "english"
 PAD_S = 0.3                # silence around the clip: a word cut off by releasing the key still decodes
 MAX_CHUNK_S = 40.0         # longer recordings are cut at a pause (attention memory grows with length)
 MIN_CHUNK_S = 25.0
@@ -76,18 +83,18 @@ def cuda_available() -> bool:
     return cuda.cuInit(0) == 0 and cuda.cuDeviceGetCount(ctypes.byref(count)) == 0 and count.value > 0
 
 
-def model_cached(gpu: bool) -> bool:
-    """Is this variant of the model already downloaded?"""
+def model_cached(model: str, gpu: bool) -> bool:
+    """Is this model, in the GPU (fp32) or CPU (int8) variant, already downloaded?"""
     try:
         from huggingface_hub import try_to_load_from_cache
 
         name = "encoder-model.onnx" if gpu else "encoder-model.int8.onnx"
-        return isinstance(try_to_load_from_cache(REPO, name), str)
+        return isinstance(try_to_load_from_cache(MODELS[model][1], name), str)
     except Exception:
         return False
 
 
-def load_model(use_gpu: bool):
+def load_model(use_gpu: bool, model: str = DEFAULT_MODEL):
     """(onnx-asr model, "GPU" | "CPU"). Falls back to the CPU if CUDA won't come up."""
     import onnxruntime as ort
     import onnx_asr
@@ -104,8 +111,9 @@ def load_model(use_gpu: bool):
     gpu = providers[0].startswith("CUDA")
     opts = ort.SessionOptions()
     opts.intra_op_num_threads = 4
-    model = onnx_asr.load_model(MODEL, quantization=None if gpu else "int8", providers=providers, sess_options=opts)
-    return model, "GPU" if gpu else "CPU"
+    name = MODELS.get(model, MODELS[DEFAULT_MODEL])[0]
+    asr = onnx_asr.load_model(name, quantization=None if gpu else "int8", providers=providers, sess_options=opts)
+    return asr, "GPU" if gpu else "CPU"
 
 
 class Engine:
@@ -124,22 +132,23 @@ class Engine:
     def ready(self) -> bool:
         return self._model is not None
 
-    def load(self, recognizer: str = "auto") -> None:
-        """Start (re)loading. recognizer: auto | gpu | cpu."""
+    def load(self, recognizer: str = "auto", model: str = DEFAULT_MODEL) -> None:
+        """Start (re)loading. recognizer: auto | gpu | cpu; model: a key of MODELS."""
+        model = model if model in MODELS else DEFAULT_MODEL
         self._generation += 1
         gen = self._generation
         self._ready.clear()
         self._model, self.error = None, ""
-        threading.Thread(target=self._load, args=(gen, recognizer), name="asr-load", daemon=True).start()
+        threading.Thread(target=self._load, args=(gen, recognizer, model), name="asr-load", daemon=True).start()
 
-    def _load(self, gen: int, recognizer: str) -> None:
+    def _load(self, gen: int, recognizer: str, model_key: str) -> None:
         want_gpu = recognizer == "gpu" or (recognizer == "auto" and cuda_available())
-        detail = "" if model_cached(want_gpu) else ("downloading the speech model (about 2.5 GB, once)" if want_gpu
-                                                    else "downloading the speech model (about 670 MB, once)")
+        size = "2.5 GB" if want_gpu else "670 MB"
+        detail = "" if model_cached(model_key, want_gpu) else f"downloading the speech model (about {size}, once)"
         self.on_state("loading", detail)
         t0 = time.perf_counter()
         try:
-            model, device = load_model(want_gpu)
+            model, device = load_model(want_gpu, model_key)
             model.recognize(np.zeros(SR, np.float32), sample_rate=SR)   # the first CUDA run builds kernels
         except Exception as exc:
             logger.exception("Could not load the speech model")
@@ -152,7 +161,8 @@ class Engine:
             return
         self._model, self.device = model, device
         self._ready.set()
-        logger.info("Speech model ready on the %s in %.1f s", device, time.perf_counter() - t0)
+        logger.info("Speech model (%s) ready on the %s in %.1f s", MODELS[model_key][0], device,
+                    time.perf_counter() - t0)
         self.on_state("ready", device)
 
     def transcribe(self, audio: np.ndarray, timeout: float = 900.0) -> str:
@@ -198,10 +208,11 @@ def read_audio(path: str) -> np.ndarray:
 def cli_main(argv: list[str]) -> int:
     files = [a for a in argv if not a.startswith("--")]
     if not files:
-        print("usage: python -m parakeet_tray transcribe FILE.wav [--cpu]", file=sys.stderr)
+        print("usage: python -m parakeet_tray transcribe FILE.wav [--cpu] [--multilingual]", file=sys.stderr)
         return 2
-    model, device = load_model("--cpu" not in argv)
-    logger.info("Model on the %s", device)
+    key = "multilingual" if "--multilingual" in argv else DEFAULT_MODEL
+    model, device = load_model("--cpu" not in argv, key)
+    logger.info("%s on the %s", MODELS[key][0], device)
     for path in files:
         audio = read_audio(path)
         t0 = time.perf_counter()

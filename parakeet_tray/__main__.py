@@ -3,6 +3,7 @@
     python -m parakeet_tray                         # tray app
     python -m parakeet_tray transcribe FILE.wav     # print a WAV file's transcript (no tray)
     python -m parakeet_tray transcribe FILE --cpu   # same, on the CPU
+    python -m parakeet_tray transcribe FILE --multilingual   # Parakeet v3 instead of English-only v2
 """
 
 import sys

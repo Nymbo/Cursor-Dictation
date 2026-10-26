@@ -3,12 +3,13 @@
 Dictation for Windows. Press a hotkey, talk, and what you said is typed wherever your cursor
 is: an editor, a chat box, a browser, a terminal. It runs in the system tray.
 
-- **Local.** NVIDIA's Parakeet TDT 0.6B v3 runs on your NVIDIA GPU, or on the CPU when
+- **Local.** NVIDIA's Parakeet TDT 0.6B runs on your NVIDIA GPU, or on the CPU when
   there isn't one. Audio never leaves the PC.
-- **Fast.** On a GTX 1070, 7 seconds of speech comes back in about a second and 80 seconds
-  in under one. The CPU (int8) model is about as quick for short clips.
-- **Punctuated.** Parakeet writes capitals and punctuation itself, and handles 25 European
-  languages without being told which one you're speaking.
+- **Fast.** On a GTX 1070, 7 seconds of speech is transcribed in 0.25 s and 80 seconds in
+  0.7 s. The CPU (int8) model takes 0.4 s and 2.1 s.
+- **Punctuated.** Parakeet writes capitals and punctuation itself. English uses Parakeet
+  v2, the more accurate of the two ([why](#model-choice)); switch to v3 in Settings for 25
+  European languages, recognised without being told which one you're speaking.
 - **Tap or hold.** Tap the hotkey to start and again to stop, or hold it while you talk
   and let go. Esc cancels.
 - **Leaves your clipboard alone.** Text goes in by paste, the one method nearly every app
@@ -29,12 +30,13 @@ cd Parakeet-Tray
 
 `.\.venv\Scripts\python.exe -m parakeet_tray` runs it with a console (log output). A second
 launch opens the running copy's settings. The speech model downloads on first use into
-the Hugging Face cache: about 2.5 GB for the GPU, or 670 MB for the CPU.
+the Hugging Face cache: about 2.5 GB for the GPU, or 670 MB for the CPU, per language
+setting.
 
 To try the model without the tray:
 
 ```powershell
-.\.venv\Scripts\python.exe -m parakeet_tray transcribe clip.wav          # add --cpu for the CPU
+.\.venv\Scripts\python.exe -m parakeet_tray transcribe clip.wav     # --cpu for the CPU, --multilingual for v3
 ```
 
 ## Using it
@@ -46,13 +48,35 @@ To try the model without the tray:
   while transcribing, grey if the model couldn't load. Click it for Settings. The menu also
   has Cancel and "Copy last dictation" (for when the paste landed in the wrong place).
 - **Settings:** the hotkey, the microphone (or "Windows default", which follows changes),
-  GPU or CPU, the tones, a trailing space after each dictation, clipboard restore, and
-  "Start with Windows".
+  the language (English or multilingual), GPU or CPU, the tones, a trailing space after
+  each dictation, clipboard restore, and "Start with Windows".
 - A recording stops on its own after 15 minutes. Long recordings are split at pauses and
   transcribed piece by piece.
 
 Settings live in `%APPDATA%\Parakeet-Tray\settings.json`, logs in
 `%LOCALAPPDATA%\Parakeet-Tray\logs`.
+
+## Model choice
+
+Dictation is short, finished clips: you stop talking, then it transcribes. So the model
+doesn't need to stream; it needs to be accurate on a few seconds of speech. Live
+Subtitles' phrase benchmark measures exactly that: 16 scenes (podcasts, earnings calls,
+TED talks, TV, a film, and read speech over music and effects) cut into phrases of up to
+12 s, each transcribed on its own on a GTX 1070.
+
+| Model | WER, real speech (11 scenes) | WER, synthetic (5) | Decode per phrase (p50) |
+|---|---|---|---|
+| **Parakeet TDT 0.6B v2** (English; the default) | **11.6%** | **10.6%** | 85 ms |
+| Parakeet TDT 0.6B v3 (25 languages) | 13.2% | 11.6% | 90 ms |
+
+v2 was ahead on 13 of the 16 scenes. Both decode a phrase far faster than you can notice,
+so there is no speed trade-off.
+
+Streaming models were left out on purpose. Nemotron streaming, the CPU engine in Live
+Subtitles, spells numbers out ("twenty twenty one"), needs a separate punctuation model,
+and only pays off when words have to appear while you are still talking. Parakeet-unified
+streams too, but runs on sherpa-onnx, whose ONNX Runtime can't share a process with this
+one; it would need a worker process, for text you only read once you've stopped talking.
 
 ## How it works
 
@@ -78,6 +102,8 @@ keyboard hook.
 
 ## License
 
-MIT. The speech model, [nvidia/parakeet-tdt-0.6b-v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3),
-is licensed CC-BY-4.0 by NVIDIA; the ONNX export is
-[istupakov/parakeet-tdt-0.6b-v3-onnx](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx).
+MIT. The speech models, [nvidia/parakeet-tdt-0.6b-v2](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)
+and [nvidia/parakeet-tdt-0.6b-v3](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3), are
+licensed CC-BY-4.0 by NVIDIA; the ONNX exports are istupakov's
+([v2](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx),
+[v3](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx)).

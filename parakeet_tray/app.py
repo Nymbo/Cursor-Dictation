@@ -84,7 +84,7 @@ class App(QObject):
         self.tray.show()
         self._register_hotkey()
         self._refresh_tray()
-        self.engine.load(self.s.recognizer)
+        self.engine.load(self.s.recognizer, self.s.model)
         if self._hotkey_ok:
             self.tray.notify(DISPLAY_NAME, f"Press {self.s.hotkey} to dictate: tap to start and stop, or hold "
                                            "while you talk.", ms=4000)
@@ -123,7 +123,7 @@ class App(QObject):
         if self.engine_status[0] == "error":
             self.sounds.play("error")
             self.tray.notify("Speech model unavailable", f"{self.engine.error}\nTrying to load it again.", error=True)
-            self.engine.load(self.s.recognizer)
+            self.engine.load(self.s.recognizer, self.s.model)
             return False
         try:
             self.recorder.start(self.s.mic)
@@ -257,8 +257,8 @@ class App(QObject):
             self._register_hotkey()
             self.settings_window.set_hotkey_failed(not self._hotkey_ok)
             self._refresh_tray()
-        elif name == "recognizer":
-            self.engine.load(self.s.recognizer)
+        elif name in ("recognizer", "model"):
+            self.engine.load(self.s.recognizer, self.s.model)
         elif name == "sounds":
             self.sounds.enabled = self.s.sounds
         self._save_timer.start()

@@ -17,6 +17,7 @@ class Settings:
     hotkey: str = "Ctrl+\\"         # tap to start and stop; hold to talk, release to stop
     mic: str = ""                   # "" = Windows default microphone (followed if it changes)
     recognizer: str = "auto"        # auto (GPU if available) | gpu | cpu
+    model: str = "english"          # english (Parakeet v2) | multilingual (v3, 25 languages)
     sounds: bool = True             # tones on start, stop, cancel and error
     trailing_space: bool = True     # so consecutive dictations don't run together
     restore_clipboard: bool = True  # put back what was on the clipboard after pasting
