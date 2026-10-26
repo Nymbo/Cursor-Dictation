@@ -1,0 +1,12 @@
+# Speech recognition: Parakeet TDT 0.6B v3 on onnx-asr. onnxruntime-gpu stays below 1.27
+# (CUDA 13 drops Pascal GPUs) and cuDNN at 9.10.2.21 (9.11+ fails on Pascal), as in
+# Meeting Context and Live Subtitles. CUDA and cuDNN come from pip; only the driver is needed.
+onnx-asr==0.12.0
+onnxruntime-gpu[cuda,cudnn]==1.23.2
+nvidia-cudnn-cu12==9.10.2.21
+huggingface_hub==2.2.0
+# Desktop shell, microphone capture, resampling.
+PySide6-Essentials==6.12.0
+PyAudioWPatch==0.2.12.9
+soxr==1.1.0
+numpy==2.5.4
